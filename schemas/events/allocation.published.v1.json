@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.cloudledger.dev/events/allocation.published.v1.json",
+  "title": "dev.cloudledger.allocation.published.v1",
+  "description": "DRAFT. Producer: allocation. Idempotency key: rule_set version. Phase 15. See docs/contracts/EVENTS.md.",
+  "x-phase": "15",
+  "x-idempotency-key": "rule_set version",
+  "allOf": [
+    {
+      "$ref": "cloudevent-envelope.v1.json"
+    }
+  ],
+  "properties": {
+    "type": {
+      "const": "dev.cloudledger.allocation.published.v1"
+    },
+    "source": {
+      "const": "cloudledger/allocation"
+    },
+    "data": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "rule_set_id",
+        "version",
+        "effective_from",
+        "published_at",
+        "checksum"
+      ],
+      "properties": {
+        "rule_set_id": {
+          "$ref": "cloudevent-envelope.v1.json#/$defs/id"
+        },
+        "version": {
+          "type": "integer"
+        },
+        "effective_from": {
+          "$ref": "cloudevent-envelope.v1.json#/$defs/date"
+        },
+        "published_by": {
+          "$ref": "cloudevent-envelope.v1.json#/$defs/id"
+        },
+        "published_at": {
+          "$ref": "cloudevent-envelope.v1.json#/$defs/timestamp"
+        },
+        "checksum": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "reallocate_periods": {
+          "type": "array",
+          "items": {
+            "$ref": "cloudevent-envelope.v1.json#/$defs/billing_period"
+          }
+        }
+      }
+    }
+  }
+}

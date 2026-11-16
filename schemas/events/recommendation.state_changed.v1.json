@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.cloudledger.dev/events/recommendation.state_changed.v1.json",
+  "title": "dev.cloudledger.recommendation.state_changed.v1",
+  "description": "DRAFT. Producer: recommendations. Idempotency key: rec id + version. Phase 26. See docs/contracts/EVENTS.md.",
+  "x-phase": "26",
+  "x-idempotency-key": "rec id + version",
+  "allOf": [
+    {
+      "$ref": "cloudevent-envelope.v1.json"
+    }
+  ],
+  "properties": {
+    "type": {
+      "const": "dev.cloudledger.recommendation.state_changed.v1"
+    },
+    "source": {
+      "const": "cloudledger/recommendations"
+    },
+    "data": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "recommendation_id",
+        "version",
+        "from_state",
+        "to_state",
+        "occurred_at"
+      ],
+      "properties": {
+        "recommendation_id": {
+          "$ref": "cloudevent-envelope.v1.json#/$defs/id"
+        },
+        "version": {
+          "type": "integer"
+        },
+        "from_state": {
+          "$ref": "#/$defs/state"
+        },
+        "to_state": {
+          "$ref": "#/$defs/state"
+        },
+        "actor_id": {
+          "anyOf": [
+            {
+              "$ref": "cloudevent-envelope.v1.json#/$defs/id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "comment": {
+          "type": "string"
+        },
+        "external_ref": {
+          "type": "string"
+        },
+        "occurred_at": {
+          "$ref": "cloudevent-envelope.v1.json#/$defs/timestamp"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "state": {
+      "enum": [
+        "open",
+        "acknowledged",
+        "in_review",
+        "approved",
+        "rejected",
+        "implemented",
+        "verified",
+        "snoozed",
+        "dismissed",
+        "expired",
+        "superseded"
+      ]
+    }
+  }
+}

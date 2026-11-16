@@ -1,0 +1,491 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.cloudledger.dev/semantic/query.v1.json",
+  "title": "CloudLedger semantic query v1",
+  "description": "DRAFT. Engine-neutral analytics query (docs/architecture/ANALYTICS_ADAPTERS.md §1). This schema covers structural validation only; registry checks (metric/dimension existence, principal visibility), ABAC predicate injection and the limits listed in x-cloudledger-limits are enforced by the semantic compiler. The schema domain is a placeholder pending OQ-01.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "metrics",
+    "time"
+  ],
+  "x-cloudledger-limits": {
+    "max_dimensions": 6,
+    "max_metrics": 12,
+    "max_limit": 10000,
+    "max_limit_ai": 1000,
+    "max_filter_depth": 8,
+    "max_filter_predicates": 200,
+    "max_time_span_per_grain": {
+      "hour": "P31D",
+      "day": "P400D",
+      "week": "P3Y",
+      "month": "P5Y",
+      "quarter": "P10Y",
+      "year": "P10Y",
+      "none": "P5Y"
+    },
+    "note": "max_dimensions, max_limit and max_limit_ai come from ANALYTICS_ADAPTERS.md. max_metrics, filter depth/predicate counts and the per-grain time spans are PROPOSED draft values to be confirmed in Phase 13. Depth and span limits cannot be expressed in JSON Schema and are enforced by the compiler (422 unsupported_query)."
+  },
+  "properties": {
+    "metrics": {
+      "description": "Metric keys from the metrics registry, e.g. effective_cost, billed_cost, unit_cost:<metric_key>.",
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 12,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/metric_ref"
+      }
+    },
+    "dimensions": {
+      "description": "Group-by dimensions (max 6).",
+      "type": "array",
+      "maxItems": 6,
+      "uniqueItems": true,
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/dimension_ref"
+      }
+    },
+    "filters": {
+      "$ref": "#/$defs/filter"
+    },
+    "time": {
+      "$ref": "#/$defs/time"
+    },
+    "currency": {
+      "description": "\"reporting\" (tenant reporting currency via the tenant FX policy), \"billing\" (no conversion; results are split by billing currency) or an explicit ISO 4217 code.",
+      "default": "reporting",
+      "anyOf": [
+        {
+          "enum": [
+            "reporting",
+            "billing"
+          ]
+        },
+        {
+          "$ref": "#/$defs/currency_code"
+        }
+      ]
+    },
+    "include": {
+      "description": "Charge-category inclusion switches.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "tax": {
+          "type": "boolean",
+          "default": false
+        },
+        "credits": {
+          "type": "boolean",
+          "default": true
+        },
+        "refunds": {
+          "type": "boolean",
+          "default": true
+        },
+        "marketplace": {
+          "type": "boolean",
+          "default": true
+        },
+        "commitment_purchases": {
+          "type": "boolean",
+          "default": false,
+          "description": "Include upfront commitment purchase charges (normally amortized via effective_cost)."
+        }
+      }
+    },
+    "order_by": {
+      "type": "array",
+      "maxItems": 6,
+      "items": {
+        "$ref": "#/$defs/order_by_item"
+      }
+    },
+    "limit": {
+      "description": "Maximum number of rows (1–10 000; capped at 1 000 for AI tool calls).",
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 10000,
+      "default": 1000
+    }
+  },
+  "$defs": {
+    "metric_ref": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]{0,62}(:[a-z0-9][a-z0-9_.-]{0,126})?$",
+      "examples": [
+        "effective_cost",
+        "savings_vs_list",
+        "unit_cost:requests"
+      ]
+    },
+    "dimension_ref": {
+      "type": "string",
+      "description": "FOCUS dimension (snake_case), tag:<normalized_key>, hierarchy:<node_type>, dim:<custom_dimension> or another registered dimension.",
+      "pattern": "^(tag:[^\\u0000-\\u001f]{1,256}|hierarchy:[a-z][a-z0-9_]{0,62}|dim:[a-z][a-z0-9_]{0,62}|[a-z][a-z0-9_]{0,62})$",
+      "examples": [
+        "provider",
+        "service_name",
+        "tag:env",
+        "hierarchy:cost_center",
+        "dim:product"
+      ]
+    },
+    "currency_code": {
+      "type": "string",
+      "pattern": "^[A-Z]{3}$",
+      "description": "ISO 4217 alphabetic code."
+    },
+    "scalar": {
+      "description": "Filter operand. Money and other decimals are passed as strings.",
+      "type": [
+        "string",
+        "boolean",
+        "integer"
+      ]
+    },
+    "filter": {
+      "description": "Recursive boolean filter AST. Max depth 8 and max 200 predicates (compiler-enforced).",
+      "oneOf": [
+        {
+          "$ref": "#/$defs/and_node"
+        },
+        {
+          "$ref": "#/$defs/or_node"
+        },
+        {
+          "$ref": "#/$defs/not_node"
+        },
+        {
+          "$ref": "#/$defs/predicate"
+        }
+      ]
+    },
+    "and_node": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "and"
+      ],
+      "properties": {
+        "and": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 100,
+          "items": {
+            "$ref": "#/$defs/filter"
+          }
+        }
+      }
+    },
+    "or_node": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "or"
+      ],
+      "properties": {
+        "or": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 100,
+          "items": {
+            "$ref": "#/$defs/filter"
+          }
+        }
+      }
+    },
+    "not_node": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "not"
+      ],
+      "properties": {
+        "not": {
+          "$ref": "#/$defs/filter"
+        }
+      }
+    },
+    "predicate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "dim",
+        "op"
+      ],
+      "properties": {
+        "dim": {
+          "$ref": "#/$defs/dimension_ref"
+        },
+        "op": {
+          "enum": [
+            "eq",
+            "neq",
+            "in",
+            "not_in",
+            "contains",
+            "starts_with",
+            "exists",
+            "not_exists",
+            "gt",
+            "gte",
+            "lt",
+            "lte"
+          ]
+        },
+        "value": {
+          "$ref": "#/$defs/scalar"
+        },
+        "values": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 1000,
+          "items": {
+            "$ref": "#/$defs/scalar"
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "enum": [
+                  "in",
+                  "not_in"
+                ]
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "values"
+            ],
+            "not": {
+              "required": [
+                "value"
+              ]
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "enum": [
+                  "exists",
+                  "not_exists"
+                ]
+              }
+            }
+          },
+          "then": {
+            "allOf": [
+              {
+                "not": {
+                  "required": [
+                    "value"
+                  ]
+                }
+              },
+              {
+                "not": {
+                  "required": [
+                    "values"
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "enum": [
+                  "eq",
+                  "neq",
+                  "contains",
+                  "starts_with",
+                  "gt",
+                  "gte",
+                  "lt",
+                  "lte"
+                ]
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "value"
+            ],
+            "not": {
+              "required": [
+                "values"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "time": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "from",
+        "to"
+      ],
+      "description": "Half-open UTC interval [from, to). Dates (YYYY-MM-DD) or RFC 3339 UTC timestamps (required for grain=hour).",
+      "properties": {
+        "field": {
+          "enum": [
+            "charge_period_start",
+            "billing_period_start"
+          ],
+          "default": "charge_period_start"
+        },
+        "from": {
+          "$ref": "#/$defs/time_point"
+        },
+        "to": {
+          "$ref": "#/$defs/time_point"
+        },
+        "grain": {
+          "enum": [
+            "hour",
+            "day",
+            "week",
+            "month",
+            "quarter",
+            "year",
+            "none"
+          ],
+          "default": "none"
+        },
+        "calendar": {
+          "enum": [
+            "gregorian",
+            "fiscal"
+          ],
+          "default": "gregorian",
+          "description": "fiscal uses the tenant accounting calendar (e.g. 4-4-5) for week/month/quarter/year buckets."
+        }
+      }
+    },
+    "time_point": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "date",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+        },
+        {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z$"
+        }
+      ]
+    },
+    "order_by_item": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "metric"
+          ],
+          "properties": {
+            "metric": {
+              "$ref": "#/$defs/metric_ref"
+            },
+            "dir": {
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "default": "desc"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "dimension"
+          ],
+          "properties": {
+            "dimension": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/dimension_ref"
+                },
+                {
+                  "const": "time"
+                }
+              ]
+            },
+            "dir": {
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "default": "asc"
+            }
+          }
+        }
+      ]
+    }
+  },
+  "examples": [
+    {
+      "metrics": [
+        "effective_cost",
+        "billed_cost"
+      ],
+      "dimensions": [
+        "provider",
+        "service_name",
+        "hierarchy:cost_center"
+      ],
+      "filters": {
+        "and": [
+          {
+            "dim": "provider",
+            "op": "in",
+            "values": [
+              "aws",
+              "gcp"
+            ]
+          },
+          {
+            "dim": "tag:env",
+            "op": "eq",
+            "value": "prod"
+          }
+        ]
+      },
+      "time": {
+        "field": "charge_period_start",
+        "from": "2026-01-01",
+        "to": "2026-04-01",
+        "grain": "month"
+      },
+      "currency": "reporting",
+      "include": {
+        "tax": false,
+        "credits": true
+      },
+      "order_by": [
+        {
+          "metric": "effective_cost",
+          "dir": "desc"
+        }
+      ],
+      "limit": 100
+    }
+  ]
+}

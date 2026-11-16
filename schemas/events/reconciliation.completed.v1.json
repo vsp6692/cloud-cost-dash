@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.cloudledger.dev/events/reconciliation.completed.v1.json",
+  "title": "dev.cloudledger.reconciliation.completed.v1",
+  "description": "DRAFT. Producer: finance. Idempotency key: result id. Phase 10. See docs/contracts/EVENTS.md.",
+  "x-phase": "10",
+  "x-idempotency-key": "result id",
+  "allOf": [
+    {
+      "$ref": "cloudevent-envelope.v1.json"
+    }
+  ],
+  "properties": {
+    "type": {
+      "const": "dev.cloudledger.reconciliation.completed.v1"
+    },
+    "source": {
+      "const": "cloudledger/finance"
+    },
+    "data": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "result_id",
+        "invoice_id",
+        "status",
+        "invoice_total",
+        "computed_total",
+        "data_version"
+      ],
+      "properties": {
+        "result_id": {
+          "$ref": "cloudevent-envelope.v1.json#/$defs/id"
+        },
+        "invoice_id": {
+          "$ref": "cloudevent-envelope.v1.json#/$defs/id"
+        },
+        "status": {
+          "enum": [
+            "matched",
+            "within_tolerance",
+            "variance",
+            "acknowledged"
+          ]
+        },
+        "invoice_total": {
+          "$ref": "cloudevent-envelope.v1.json#/$defs/money"
+        },
+        "computed_total": {
+          "$ref": "cloudevent-envelope.v1.json#/$defs/money"
+        },
+        "difference": {
+          "$ref": "cloudevent-envelope.v1.json#/$defs/money"
+        },
+        "tolerance": {
+          "$ref": "cloudevent-envelope.v1.json#/$defs/money"
+        },
+        "data_version": {
+          "type": "integer"
+        },
+        "variance_categories": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

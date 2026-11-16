@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.cloudledger.dev/events/anomaly.detected.v1.json",
+  "title": "dev.cloudledger.anomaly.detected.v1",
+  "description": "DRAFT. Producer: forecasting. Idempotency key: anomaly id. Phase 17. See docs/contracts/EVENTS.md.",
+  "x-phase": "17",
+  "x-idempotency-key": "anomaly id",
+  "allOf": [
+    {
+      "$ref": "cloudevent-envelope.v1.json"
+    }
+  ],
+  "properties": {
+    "type": {
+      "const": "dev.cloudledger.anomaly.detected.v1"
+    },
+    "source": {
+      "const": "cloudledger/forecasting"
+    },
+    "data": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "anomaly_id",
+        "usage_date",
+        "expected",
+        "actual",
+        "score",
+        "scope"
+      ],
+      "properties": {
+        "anomaly_id": {
+          "$ref": "cloudevent-envelope.v1.json#/$defs/id"
+        },
+        "usage_date": {
+          "$ref": "cloudevent-envelope.v1.json#/$defs/date"
+        },
+        "scope": {
+          "type": "object"
+        },
+        "expected": {
+          "$ref": "cloudevent-envelope.v1.json#/$defs/money"
+        },
+        "actual": {
+          "$ref": "cloudevent-envelope.v1.json#/$defs/money"
+        },
+        "score": {
+          "$ref": "cloudevent-envelope.v1.json#/$defs/decimal"
+        },
+        "detector_version": {
+          "type": "string"
+        },
+        "contributors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "dimension",
+              "value",
+              "delta"
+            ],
+            "properties": {
+              "dimension": {
+                "type": "string"
+              },
+              "value": {
+                "type": "string"
+              },
+              "delta": {
+                "$ref": "cloudevent-envelope.v1.json#/$defs/money"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

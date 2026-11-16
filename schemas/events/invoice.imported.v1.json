@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.cloudledger.dev/events/invoice.imported.v1.json",
+  "title": "dev.cloudledger.invoice.imported.v1",
+  "description": "DRAFT. Producer: finance. Idempotency key: invoice id. Phase 10. See docs/contracts/EVENTS.md.",
+  "x-phase": "10",
+  "x-idempotency-key": "invoice id",
+  "allOf": [
+    {
+      "$ref": "cloudevent-envelope.v1.json"
+    }
+  ],
+  "properties": {
+    "type": {
+      "const": "dev.cloudledger.invoice.imported.v1"
+    },
+    "source": {
+      "const": "cloudledger/finance"
+    },
+    "data": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "invoice_id",
+        "provider",
+        "invoice_number",
+        "billing_account",
+        "period_start",
+        "period_end",
+        "total"
+      ],
+      "properties": {
+        "invoice_id": {
+          "$ref": "cloudevent-envelope.v1.json#/$defs/id"
+        },
+        "provider": {
+          "$ref": "cloudevent-envelope.v1.json#/$defs/provider"
+        },
+        "invoice_number": {
+          "type": "string"
+        },
+        "billing_account": {
+          "type": "string"
+        },
+        "invoice_date": {
+          "$ref": "cloudevent-envelope.v1.json#/$defs/date"
+        },
+        "period_start": {
+          "$ref": "cloudevent-envelope.v1.json#/$defs/date"
+        },
+        "period_end": {
+          "$ref": "cloudevent-envelope.v1.json#/$defs/date"
+        },
+        "subtotal": {
+          "$ref": "cloudevent-envelope.v1.json#/$defs/money"
+        },
+        "tax": {
+          "$ref": "cloudevent-envelope.v1.json#/$defs/money"
+        },
+        "total": {
+          "$ref": "cloudevent-envelope.v1.json#/$defs/money"
+        },
+        "source": {
+          "enum": [
+            "api",
+            "upload",
+            "export"
+          ]
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.cloudledger.dev/events/audit.anchor.written.v1.json",
+  "title": "dev.cloudledger.audit.anchor.written.v1",
+  "description": "DRAFT. Producer: audit. Idempotency key: tenant + seq. Phase 04. See docs/contracts/EVENTS.md.",
+  "x-phase": "04",
+  "x-idempotency-key": "tenant + seq",
+  "allOf": [
+    {
+      "$ref": "cloudevent-envelope.v1.json"
+    }
+  ],
+  "properties": {
+    "type": {
+      "const": "dev.cloudledger.audit.anchor.written.v1"
+    },
+    "source": {
+      "const": "cloudledger/audit"
+    },
+    "data": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "seq",
+        "hash",
+        "anchored_at",
+        "anchor_type"
+      ],
+      "properties": {
+        "seq": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "hash": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "anchored_at": {
+          "$ref": "cloudevent-envelope.v1.json#/$defs/timestamp"
+        },
+        "anchor_type": {
+          "enum": [
+            "internal",
+            "object_lock",
+            "rfc3161_tsa",
+            "external"
+          ]
+        },
+        "anchor_ref": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

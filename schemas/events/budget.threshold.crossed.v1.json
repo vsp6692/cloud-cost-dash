@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.cloudledger.dev/events/budget.threshold.crossed.v1.json",
+  "title": "dev.cloudledger.budget.threshold.crossed.v1",
+  "description": "DRAFT. Producer: forecasting. Idempotency key: budget + period + threshold + basis. Phase 17. See docs/contracts/EVENTS.md.",
+  "x-phase": "17",
+  "x-idempotency-key": "budget + period + threshold + basis",
+  "allOf": [
+    {
+      "$ref": "cloudevent-envelope.v1.json"
+    }
+  ],
+  "properties": {
+    "type": {
+      "const": "dev.cloudledger.budget.threshold.crossed.v1"
+    },
+    "source": {
+      "const": "cloudledger/forecasting"
+    },
+    "data": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "budget_id",
+        "period_start",
+        "threshold_pct",
+        "basis",
+        "budget_amount",
+        "observed_amount"
+      ],
+      "properties": {
+        "budget_id": {
+          "$ref": "cloudevent-envelope.v1.json#/$defs/id"
+        },
+        "budget_name": {
+          "type": "string"
+        },
+        "period_start": {
+          "$ref": "cloudevent-envelope.v1.json#/$defs/date"
+        },
+        "period_end": {
+          "$ref": "cloudevent-envelope.v1.json#/$defs/date"
+        },
+        "threshold_pct": {
+          "$ref": "cloudevent-envelope.v1.json#/$defs/decimal"
+        },
+        "basis": {
+          "enum": [
+            "actual",
+            "forecast"
+          ]
+        },
+        "budget_amount": {
+          "$ref": "cloudevent-envelope.v1.json#/$defs/money"
+        },
+        "observed_amount": {
+          "$ref": "cloudevent-envelope.v1.json#/$defs/money"
+        },
+        "data_version": {
+          "type": "integer"
+        }
+      }
+    }
+  }
+}

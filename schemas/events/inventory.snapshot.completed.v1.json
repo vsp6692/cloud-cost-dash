@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.cloudledger.dev/events/inventory.snapshot.completed.v1.json",
+  "title": "dev.cloudledger.inventory.snapshot.completed.v1",
+  "description": "DRAFT. Producer: inventory. Idempotency key: connector + snapshot time. Phase 19. See docs/contracts/EVENTS.md.",
+  "x-phase": "19",
+  "x-idempotency-key": "connector + snapshot time",
+  "allOf": [
+    {
+      "$ref": "cloudevent-envelope.v1.json"
+    }
+  ],
+  "properties": {
+    "type": {
+      "const": "dev.cloudledger.inventory.snapshot.completed.v1"
+    },
+    "source": {
+      "const": "cloudledger/inventory"
+    },
+    "data": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "connector_id",
+        "snapshot_at",
+        "resource_count"
+      ],
+      "properties": {
+        "connector_id": {
+          "$ref": "cloudevent-envelope.v1.json#/$defs/id"
+        },
+        "provider": {
+          "$ref": "cloudevent-envelope.v1.json#/$defs/provider"
+        },
+        "snapshot_at": {
+          "$ref": "cloudevent-envelope.v1.json#/$defs/timestamp"
+        },
+        "resource_count": {
+          "type": "integer"
+        },
+        "resource_types": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "partial": {
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.cloudledger.dev/events/cost.period.restated.v1.json",
+  "title": "dev.cloudledger.cost.period.restated.v1",
+  "description": "DRAFT. Producer: billing. Idempotency key: tenant + connector + period + data_version. Phase 12. See docs/contracts/EVENTS.md.",
+  "x-phase": "12",
+  "x-idempotency-key": "tenant + connector + period + data_version",
+  "allOf": [
+    {
+      "$ref": "cloudevent-envelope.v1.json"
+    }
+  ],
+  "properties": {
+    "type": {
+      "const": "dev.cloudledger.cost.period.restated.v1"
+    },
+    "source": {
+      "const": "cloudledger/billing"
+    },
+    "data": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "connector_id",
+        "billing_period",
+        "data_version",
+        "previous_period_version",
+        "period_version",
+        "ingestion_run_id",
+        "delta"
+      ],
+      "properties": {
+        "connector_id": {
+          "$ref": "cloudevent-envelope.v1.json#/$defs/id"
+        },
+        "provider": {
+          "$ref": "cloudevent-envelope.v1.json#/$defs/provider"
+        },
+        "billing_period": {
+          "$ref": "cloudevent-envelope.v1.json#/$defs/billing_period"
+        },
+        "data_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "previous_period_version": {
+          "type": "integer"
+        },
+        "period_version": {
+          "type": "integer"
+        },
+        "ingestion_run_id": {
+          "$ref": "cloudevent-envelope.v1.json#/$defs/id"
+        },
+        "affects_closed_period": {
+          "type": "boolean"
+        },
+        "delta": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "currency",
+              "billed_cost_delta",
+              "effective_cost_delta"
+            ],
+            "properties": {
+              "billing_account_id": {
+                "type": "string"
+              },
+              "currency": {
+                "$ref": "cloudevent-envelope.v1.json#/$defs/currency"
+              },
+              "billed_cost_delta": {
+                "$ref": "cloudevent-envelope.v1.json#/$defs/decimal"
+              },
+              "effective_cost_delta": {
+                "$ref": "cloudevent-envelope.v1.json#/$defs/decimal"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.cloudledger.dev/events/report.run.completed.v1.json",
+  "title": "dev.cloudledger.report.run.completed.v1",
+  "description": "DRAFT. Producer: finance. Idempotency key: run id. Phase 30. See docs/contracts/EVENTS.md.",
+  "x-phase": "30",
+  "x-idempotency-key": "run id",
+  "allOf": [
+    {
+      "$ref": "cloudevent-envelope.v1.json"
+    }
+  ],
+  "properties": {
+    "type": {
+      "const": "dev.cloudledger.report.run.completed.v1"
+    },
+    "source": {
+      "const": "cloudledger/finance"
+    },
+    "data": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "run_id",
+        "status",
+        "artifacts",
+        "manifest_sha256"
+      ],
+      "properties": {
+        "run_id": {
+          "$ref": "cloudevent-envelope.v1.json#/$defs/id"
+        },
+        "definition_id": {
+          "anyOf": [
+            {
+              "$ref": "cloudevent-envelope.v1.json#/$defs/id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "period_id": {
+          "$ref": "cloudevent-envelope.v1.json#/$defs/id"
+        },
+        "status": {
+          "enum": [
+            "succeeded",
+            "failed"
+          ]
+        },
+        "manifest_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "artifacts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "format",
+              "sha256"
+            ],
+            "properties": {
+              "format": {
+                "type": "string"
+              },
+              "sha256": {
+                "type": "string"
+              },
+              "size_bytes": {
+                "type": "integer"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

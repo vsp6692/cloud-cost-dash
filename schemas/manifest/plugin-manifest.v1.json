@@ -1,0 +1,776 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.cloudledger.dev/manifest/plugin-manifest.v1.json",
+  "title": "CloudLedger plugin capability manifest v1",
+  "description": "DRAFT (final in Phase 35). See docs/contracts/CAPABILITY_MANIFEST.md. Strict: unknown fields are rejected in v1. metadata.license is a required SPDX expression; it is informational only and never enforced at runtime (NFR-LIC-004). The license pattern is a syntactic approximation; CI validates with a full SPDX expression parser.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "apiVersion",
+    "kind",
+    "metadata",
+    "compatibility",
+    "execution"
+  ],
+  "properties": {
+    "apiVersion": {
+      "const": "cloudledger.dev/plugin/v1"
+    },
+    "kind": {
+      "enum": [
+        "Provider",
+        "RecommendationRule",
+        "PricingSource",
+        "DashboardWidget"
+      ]
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "version",
+        "vendor",
+        "license"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^([a-z0-9][a-z0-9-]{0,62}|[a-z][a-z0-9-]*(\\.[a-z0-9][a-z0-9-]*)+)$",
+          "description": "Globally unique. First-party: short id (aws). Third-party: reverse-DNS (com.example.oci)."
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(-[0-9A-Za-z.-]+)?(\\+[0-9A-Za-z.-]+)?$",
+          "description": "SemVer of the plugin."
+        },
+        "vendor": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "license": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512,
+          "pattern": "^\\(*\\s*[A-Za-z0-9][A-Za-z0-9.+:-]*\\s*\\)*(\\s+(AND|OR|WITH)\\s+\\(*\\s*[A-Za-z0-9][A-Za-z0-9.+:-]*\\s*\\)*)*$",
+          "description": "SPDX license expression (see docs/legal/PLUGIN_LICENSING.md).",
+          "examples": [
+            "LicenseRef-CloudLedger-SAL-1.0",
+            "Apache-2.0",
+            "MIT OR Apache-2.0"
+          ]
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 2000
+        },
+        "source": {
+          "type": "string",
+          "format": "uri"
+        },
+        "homepage": {
+          "type": "string",
+          "format": "uri"
+        },
+        "security_contact": {
+          "type": "string",
+          "minLength": 3
+        }
+      }
+    },
+    "compatibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sdk",
+        "cloudledger"
+      ],
+      "properties": {
+        "sdk": {
+          "type": "string",
+          "description": "SemVer range of the plugin SDK, e.g. \">=1.0.0 <2.0.0\"."
+        },
+        "cloudledger": {
+          "type": "string",
+          "description": "SemVer range of CloudLedger."
+        },
+        "focus_versions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^\\d+\\.\\d+$"
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "execution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mode"
+      ],
+      "properties": {
+        "mode": {
+          "enum": [
+            "in_process",
+            "grpc"
+          ],
+          "description": "in_process: first-party, compiled in. grpc: out-of-process."
+        },
+        "egress": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9*.-]+:[0-9]{1,5}$"
+          },
+          "uniqueItems": true
+        }
+      },
+      "if": {
+        "properties": {
+          "mode": {
+            "const": "grpc"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "egress"
+        ]
+      }
+    },
+    "auth_methods": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "keyless"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$"
+          },
+          "params": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          },
+          "keyless": {
+            "type": "boolean"
+          },
+          "discouraged": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "scopes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "type"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$"
+          },
+          "children": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          }
+        }
+      }
+    },
+    "capabilities": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "properties": {
+        "billing": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "availability": {
+              "enum": [
+                "available",
+                "entitlement_dependent"
+              ],
+              "default": "available"
+            },
+            "sources": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "uniqueItems": true
+            },
+            "formats": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "uniqueItems": true
+            },
+            "granularity": {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "hourly",
+                  "daily",
+                  "monthly"
+                ]
+              }
+            },
+            "restatements": {
+              "type": "boolean"
+            },
+            "mapping": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "key",
+                "version"
+              ],
+              "properties": {
+                "key": {
+                  "type": "string"
+                },
+                "version": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              }
+            }
+          }
+        },
+        "invoices": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "availability": {
+              "enum": [
+                "available",
+                "entitlement_dependent"
+              ],
+              "default": "available"
+            },
+            "sources": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "uniqueItems": true
+            }
+          }
+        },
+        "inventory": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "availability": {
+              "enum": [
+                "available",
+                "entitlement_dependent"
+              ],
+              "default": "available"
+            },
+            "sources": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "uniqueItems": true
+            }
+          }
+        },
+        "metrics": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "availability": {
+              "enum": [
+                "available",
+                "entitlement_dependent"
+              ],
+              "default": "available"
+            },
+            "sources": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "uniqueItems": true
+            },
+            "metrics": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "uniqueItems": true
+            }
+          }
+        },
+        "provider_recommendations": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "availability": {
+              "enum": [
+                "available",
+                "entitlement_dependent"
+              ],
+              "default": "available"
+            },
+            "sources": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "uniqueItems": true
+            }
+          }
+        },
+        "pricing": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "availability": {
+              "enum": [
+                "available",
+                "entitlement_dependent"
+              ],
+              "default": "available"
+            },
+            "sources": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "uniqueItems": true
+            }
+          }
+        },
+        "commitments": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "availability": {
+              "enum": [
+                "available",
+                "entitlement_dependent"
+              ],
+              "default": "available"
+            },
+            "sources": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "uniqueItems": true
+            },
+            "types": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "uniqueItems": true
+            }
+          }
+        }
+      }
+    },
+    "permissions": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "template_refs": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "required": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          }
+        }
+      }
+    },
+    "category": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "examples": [
+        "rightsizing",
+        "idle_resource",
+        "commitment",
+        "storage_tiering"
+      ]
+    },
+    "inputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "cost": {
+          "type": "boolean"
+        },
+        "inventory_types": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "metrics": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "pricing": {
+          "type": "boolean"
+        }
+      }
+    },
+    "targets": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true,
+      "minItems": 1,
+      "description": "Resource types the rule evaluates."
+    },
+    "overlap_keys": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true,
+      "description": "Keys used to group mutually exclusive recommendations so savings are not double-counted."
+    },
+    "default_thresholds": {
+      "type": "object",
+      "additionalProperties": {
+        "type": [
+          "string",
+          "integer",
+          "boolean"
+        ]
+      },
+      "description": "Decimal thresholds are strings."
+    },
+    "risk_model": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "default_risk": {
+          "enum": [
+            "low",
+            "medium",
+            "high"
+          ]
+        },
+        "factors": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "providers": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true,
+      "minItems": 1
+    },
+    "catalog_types": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "on_demand",
+          "spot",
+          "commitment"
+        ]
+      }
+    },
+    "refresh": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "interval": {
+          "type": "string",
+          "pattern": "^P",
+          "description": "ISO 8601 duration."
+        },
+        "incremental": {
+          "type": "boolean"
+        }
+      }
+    },
+    "widget_type": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_.-]*$"
+    },
+    "query_shape": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "min_metrics": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "max_metrics": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "max_dimensions": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 6
+        },
+        "requires_time": {
+          "type": "boolean"
+        },
+        "allowed_grains": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "hour",
+              "day",
+              "week",
+              "month",
+              "quarter",
+              "year",
+              "none"
+            ]
+          }
+        }
+      }
+    },
+    "options_schema": {
+      "type": "object",
+      "description": "JSON Schema (2020-12) for widget options."
+    },
+    "bundle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "sha256",
+        "signature"
+      ],
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "signature": {
+          "type": "string",
+          "minLength": 1
+        },
+        "csp": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          }
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "Provider"
+          }
+        },
+        "required": [
+          "kind"
+        ]
+      },
+      "then": {
+        "required": [
+          "auth_methods",
+          "scopes",
+          "capabilities"
+        ],
+        "properties": {
+          "category": false,
+          "inputs": false,
+          "targets": false,
+          "overlap_keys": false,
+          "default_thresholds": false,
+          "risk_model": false,
+          "providers": false,
+          "catalog_types": false,
+          "refresh": false,
+          "widget_type": false,
+          "query_shape": false,
+          "options_schema": false,
+          "bundle": false
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "RecommendationRule"
+          }
+        },
+        "required": [
+          "kind"
+        ]
+      },
+      "then": {
+        "required": [
+          "category",
+          "inputs",
+          "targets"
+        ],
+        "properties": {
+          "auth_methods": false,
+          "scopes": false,
+          "capabilities": false,
+          "permissions": false,
+          "providers": false,
+          "catalog_types": false,
+          "refresh": false,
+          "widget_type": false,
+          "query_shape": false,
+          "options_schema": false,
+          "bundle": false
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "PricingSource"
+          }
+        },
+        "required": [
+          "kind"
+        ]
+      },
+      "then": {
+        "required": [
+          "providers",
+          "catalog_types"
+        ],
+        "properties": {
+          "auth_methods": false,
+          "scopes": false,
+          "capabilities": false,
+          "permissions": false,
+          "category": false,
+          "inputs": false,
+          "targets": false,
+          "overlap_keys": false,
+          "default_thresholds": false,
+          "risk_model": false,
+          "widget_type": false,
+          "query_shape": false,
+          "options_schema": false,
+          "bundle": false
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "DashboardWidget"
+          }
+        },
+        "required": [
+          "kind"
+        ]
+      },
+      "then": {
+        "required": [
+          "widget_type",
+          "query_shape",
+          "bundle"
+        ],
+        "properties": {
+          "auth_methods": false,
+          "scopes": false,
+          "capabilities": false,
+          "permissions": false,
+          "category": false,
+          "inputs": false,
+          "targets": false,
+          "overlap_keys": false,
+          "default_thresholds": false,
+          "risk_model": false,
+          "providers": false,
+          "catalog_types": false,
+          "refresh": false
+        }
+      }
+    }
+  ]
+}

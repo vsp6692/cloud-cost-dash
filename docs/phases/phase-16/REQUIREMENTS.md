@@ -1,0 +1,22 @@
+# Phase 16 Requirements
+
+Priority: M = must, S = should, C = could.
+
+| ID | Requirement | PRD trace | Pri | Acceptance |
+|---|---|---|---|---|
+| P16-R01 | Users with `dashboard:create` can create, rename, duplicate and delete dashboards. Layout is a 12-column grid with per-breakpoint positions; dashboard-level filters, time range, cost metric, currency and include tax/credits defaults apply to all widgets unless a widget overrides them. | FR-DSH-004, FR-DSH-002 | M | P16-AC01 |
+| P16-R02 | Widget types `timeseries`, `bar`, `pie`, `treemap`, `table`, `kpi`, `heatmap`, each with a JSON-Schema-validated options object and a declared query shape (e.g. KPI: 1 metric, 0 dims; heatmap: 2 dims). Widgets store semantic queries only (no SQL, no cached results). | FR-DSH-004, FR-ANL-002 | M | P16-AC02 |
+| P16-R03 | Every widget shows freshness and completeness from query `meta` (inherits Phase 14 badge). | FR-DSH-003 | M | P16-AC02 |
+| P16-R04 | Saved views: named semantic query + visualization, visibility `private`, `shared` (explicit grants) or `tenant`. Saved views can be added to dashboards as widgets by reference. | FR-DSH-004 | M | P16-AC03 |
+| P16-R05 | Templates: built-in templates (versioned in code) and tenant templates. Instantiating a template creates an independent dashboard. Templates reference dimensions by registry key; missing dimensions (e.g. no custom dimension `product`) produce a placeholder widget with guidance, not an error. | FR-DSH-004 | M | P16-AC04 |
+| P16-R06 | Sharing: owner or editor grants `view`/`edit` to users, groups or the whole tenant. Revocation is immediate. Only owners transfer ownership or delete. | FR-DSH-005 | M | P16-AC05 |
+| P16-R07 | No data outside the viewer's ABAC scope: widgets execute with the viewer's principal and scope; result caches are keyed by viewer scope hash; the author's filter is intersected with (never widens) the viewer's scope. Filter values outside the viewer's scope are not disclosed. | FR-DSH-005, FR-IAM-006, FR-ANL-004, NFR-SEC-001, AC-02 | M | P16-AC06 |
+| P16-R08 | Per-role default dashboards configurable by tenant owner/FinOps admin; resolution order: user pin > role default (highest-priority role binding) > tenant default > built-in by persona. A default the user cannot view is skipped. | FR-DSH-004, FR-IAM-004 | M | P16-AC07 |
+| P16-R09 | Widget export to CSV and XLSX requires `dashboard:export` and view access; exported rows equal the widget's ABAC-filtered result at the same `data_version`; money exported as decimal strings (CSV) or text-preserving numeric cells with explicit scale (XLSX). | FR-DSH-006, NFR-ACC-003 | S | P16-AC08 |
+| P16-R10 | Export safety: cells beginning with `=`, `+`, `-`, `@`, tab or CR are neutralized using the Phase 09 safe writer (prefix `'`, except valid decimal numbers in money columns); row cap 100 000 (configurable), file streamed, pre-signed URL single-object TTL ≤ 5 min, export audited. | FR-IMP-004, FR-DSH-006, NFR-SEC-002 | M | P16-AC08 |
+| P16-R11 | Optimistic concurrency: dashboard updates require `If-Match`; conflicting edits return 412 and the UI offers reload/merge. Each save increments `version`; last 20 versions retained for restore. | FR-DSH-004 | S | P16-AC01 |
+| P16-R12 | Authorization: permissions `dashboard:read`, `dashboard:create`, `dashboard:share`, `dashboard:export`, `dashboard:manage_defaults`, `dashboard_template:manage`; positive and negative tests per built-in role. Sharing, export and default changes are audited. | FR-IAM-004/005, FR-AUD-001, AC-03 | M | P16-AC09 |
+| P16-R13 | Input safety: titles, descriptions and options are rendered as text (no HTML/Markdown execution); layout JSON ≤ 256 KiB, ≤ 40 widgets per dashboard; strict CSP retained. | NFR-SEC-002 | M | P16-AC09 |
+| P16-R14 | Cross-tenant: dashboard, view, template and share IDs from another tenant return 404; shares cannot target subjects outside the tenant. | FR-TEN-001, NFR-SEC-001 | M | P16-AC06 |
+| P16-R15 | Performance: a 12-widget dashboard first meaningful render ≤ 3 s p95 on Standard (ClickHouse, warm cache ≤ 1 s); metadata endpoints p95 ≤ 300 ms. Max 6 concurrent widget queries per dashboard view. | NFR-PERF-001, NFR-PERF-002 | S | P16-AC10 |
+| P16-R16 | Accessibility and i18n: builder operable by keyboard (move/resize via keyboard), charts have table alternatives, WCAG 2.2 AA (axe zero serious/critical), strings externalized. | NFR-A11Y-001, NFR-I18N-001 | M | P16-AC11 |

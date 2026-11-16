@@ -1,0 +1,139 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.cloudledger.dev/events/cloudevent-envelope.v1.json",
+  "title": "CloudLedger CloudEvents 1.0 envelope (JSON format)",
+  "description": "DRAFT. Envelope for all CloudLedger domain events (docs/contracts/EVENTS.md). tenantid and traceparent are CloudEvents extension attributes. The type prefix dev.cloudledger and the schema domain are placeholders pending OQ-01. Consumers must ignore unknown data fields (additive evolution).",
+  "type": "object",
+  "required": [
+    "specversion",
+    "id",
+    "source",
+    "type",
+    "time",
+    "datacontenttype",
+    "tenantid",
+    "data"
+  ],
+  "properties": {
+    "specversion": {
+      "const": "1.0"
+    },
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "description": "Unique event id (UUIDv7). Consumers deduplicate on id plus the documented idempotency key."
+    },
+    "source": {
+      "type": "string",
+      "pattern": "^cloudledger/[a-z][a-z0-9_-]*$",
+      "examples": [
+        "cloudledger/billing"
+      ]
+    },
+    "type": {
+      "type": "string",
+      "pattern": "^dev\\.cloudledger\\.[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)*\\.v[0-9]+$"
+    },
+    "subject": {
+      "type": "string",
+      "maxLength": 512
+    },
+    "time": {
+      "$ref": "cloudevent-envelope.v1.json#/$defs/timestamp"
+    },
+    "datacontenttype": {
+      "const": "application/json"
+    },
+    "dataschema": {
+      "type": "string",
+      "format": "uri"
+    },
+    "tenantid": {
+      "$ref": "cloudevent-envelope.v1.json#/$defs/id"
+    },
+    "traceparent": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{2}-[0-9a-f]{32}-[0-9a-f]{16}-[0-9a-f]{2}$",
+      "description": "W3C Trace Context traceparent."
+    },
+    "tracestate": {
+      "type": "string"
+    },
+    "data": {
+      "type": "object"
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "description": "Opaque identifier (UUIDv7)."
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "Z$",
+      "description": "RFC 3339 UTC timestamp."
+    },
+    "date": {
+      "type": "string",
+      "format": "date"
+    },
+    "billing_period": {
+      "type": "string",
+      "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+      "description": "Billing month YYYY-MM."
+    },
+    "decimal": {
+      "type": "string",
+      "pattern": "^-?(0|[1-9][0-9]{0,25})(\\.[0-9]{1,12})?$",
+      "description": "Fixed-point decimal string (numeric(38,12)). Never a JSON number."
+    },
+    "currency": {
+      "type": "string",
+      "pattern": "^[A-Z]{3}$",
+      "description": "ISO 4217 code."
+    },
+    "money": {
+      "type": "object",
+      "required": [
+        "amount",
+        "currency"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "amount": {
+          "$ref": "#/$defs/decimal"
+        },
+        "currency": {
+          "$ref": "#/$defs/currency"
+        }
+      }
+    },
+    "provider": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "description": "aws | gcp | azure | generic | <plugin id>"
+    },
+    "problem": {
+      "type": "object",
+      "required": [
+        "code"
+      ],
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "detail": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.cloudledger.dev/events/period.closed.v1.json",
+  "title": "dev.cloudledger.period.closed.v1",
+  "description": "DRAFT. Producer: finance. Idempotency key: period id. Phase 30. See docs/contracts/EVENTS.md.",
+  "x-phase": "30",
+  "x-idempotency-key": "period id",
+  "allOf": [
+    {
+      "$ref": "cloudevent-envelope.v1.json"
+    }
+  ],
+  "properties": {
+    "type": {
+      "const": "dev.cloudledger.period.closed.v1"
+    },
+    "source": {
+      "const": "cloudledger/finance"
+    },
+    "data": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "period_id",
+        "period_key",
+        "closed_at",
+        "snapshot"
+      ],
+      "properties": {
+        "period_id": {
+          "$ref": "cloudevent-envelope.v1.json#/$defs/id"
+        },
+        "period_key": {
+          "type": "string"
+        },
+        "start_date": {
+          "$ref": "cloudevent-envelope.v1.json#/$defs/date"
+        },
+        "end_date": {
+          "$ref": "cloudevent-envelope.v1.json#/$defs/date"
+        },
+        "closed_by": {
+          "$ref": "cloudevent-envelope.v1.json#/$defs/id"
+        },
+        "closed_at": {
+          "$ref": "cloudevent-envelope.v1.json#/$defs/timestamp"
+        },
+        "snapshot": {
+          "type": "object",
+          "required": [
+            "snapshot_id",
+            "data_version",
+            "rule_set_version",
+            "manifest_sha256"
+          ],
+          "properties": {
+            "snapshot_id": {
+              "$ref": "cloudevent-envelope.v1.json#/$defs/id"
+            },
+            "data_version": {
+              "type": "integer"
+            },
+            "rule_set_version": {
+              "type": "integer"
+            },
+            "fx_rate_set_id": {
+              "$ref": "cloudevent-envelope.v1.json#/$defs/id"
+            },
+            "manifest_sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "worm_locked_until": {
+              "$ref": "cloudevent-envelope.v1.json#/$defs/date"
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,36 @@
+# Phase 04 Test Plan
+
+All tests are planned and **NOT RUN**. Use synthetic two-tenant fixtures with distinct roles, reproducible clocks and versioned input hashes. Cloud credentials are optional for fixture tests; live-provider checks are separate and must report unavailable credentials explicitly.
+
+| Test ID | Requirement | Scenario and expected result | PRD trace |
+|---|---|---|---|
+| P04-TC01 | P04-R01 | Given an authorized fixture, verify: `tenants` (kind individual/organization, status, slug, optional `parent_tenant_id`, `data_region`) and `tenant_settings` (reporting currency, FX policy, accounting calendar incl. fiscal year start, timezone, retention, AI settings, `default_cost_metric`, `data_egress_policy`) exist per DATABASE_SCHEMA with F-06 fixed. Defaults: USD, `charge_date`, gregorian, UTC, AI disabled. | FR-TEN-001, 002, 007, OQ-09, OQ-16 |
+| P04-TC02 | P04-R02 | Given an authorized fixture, verify: Every tenant-owned table has `tenant_id NOT NULL`, PK leading with `tenant_id`, composite FKs `(tenant_id, x_id)`, and RLS ENABLED **and** FORCED with the standard `tenant_isolation` policy. Exceptions (`tenants`, global catalogs) are listed in an allow-list with reason. | FR-TEN-001, NFR-SEC-001, ADR-0003, SEC-ISO-* |
+| P04-TC03 | P04-R03 | Given an authorized fixture, verify: The application connects as `cloudledger_app` (no BYPASSRLS, not owner). `WithTenantTx(ctx, tenantID, fn)` runs `SET LOCAL app.tenant_id` in every transaction; repositories cannot be called without a `TenantContext` (compile-time); a transaction without `app.tenant_id` sees zero tenant rows and cannot insert. | NFR-SEC-001, TENANCY §2 |
+| P04-TC04 | P04-R04 | Given an authorized fixture, verify: Tenant lifecycle per TENANCY §3: provisioning → active ↔ suspended → pending_deletion (grace default 30 d) → deleted; restore during grace; illegal transitions rejected. Suspended tenants: API returns `403 tenant_suspended`, jobs are not leased. | FR-TEN-004 |
+| P04-TC05 | P04-R05 | Given an authorized fixture, verify: Purge job deletes all tenant rows and object-storage prefixes, then destroys the tenant DEK (crypto-shredding); runs only after grace expiry, is idempotent and resumable, records `tenant.deleted.v1` and a platform audit event. | FR-TEN-004, NFR-PRIV-001, KEY-* |
+| P04-TC06 | P04-R06 | Given an authorized fixture, verify: `cloudledger admin tenant export` produces a signed archive (tenant, settings, hierarchy, audit chain) with a manifest of SHA-256 hashes. | FR-TEN-004, NFR-PRIV-001 |
+| P04-TC07 | P04-R07 | Given an authorized fixture, verify: Hierarchy versions and nodes (ltree paths): create draft, edit nodes, publish (immutable thereafter), effective dating; unique key per version; cycles rejected. | FR-TEN-003 (Phase 04 part) |
+| P04-TC08 | P04-R08 | Given an authorized fixture, verify: Audit log per ADR-0014: insert-only (grants + trigger rejecting UPDATE/DELETE), per-tenant monotonic `seq`, `hash = SHA-256(canonical_json(event) ‖ prev_hash)`, written in the same transaction as the audited change; PK fixed per F-01; platform events use the reserved platform tenant UUID. | FR-AUD-001, SEC-AUD-*, ADR-0014 |
+| P04-TC09 | P04-R09 | Given an authorized fixture, verify: Chain-head anchors are written periodically to object storage (WORM/object lock where available; MinIO/local FS in Lite) and emit `audit.anchor.written.v1`; `cloudledger admin audit verify [--tenant]` detects modification, deletion, reordering and anchor mismatch. | FR-AUD-001, ADR-0014 |
+| P04-TC10 | P04-R10 | Given an authorized fixture, verify: Transactional outbox: events written in the domain transaction, relayed at-least-once to in-process subscribers and job enqueues, CloudEvents 1.0 envelope with `tenantid` and `traceparent`; `tenant.created.v1`, `tenant.deleted.v1` produced. | ADR-0005, EVENTS.md |
+| P04-TC11 | P04-R11 | Given an authorized fixture, verify: PG job queue implements `jobs.Queue`: `SKIP LOCKED` leasing, lease expiry and re-delivery, exponential backoff with jitter, unique active keys, `discarded` as DLQ, priority, cancellation; worker sets tenant context from the payload before any DB access and rejects payload/tenant mismatch. | OQ-05, ADR-0005, FR-ING-004 (foundation) |
+| P04-TC12 | P04-R12 | Given an authorized fixture, verify: Idempotency store `(tenant, principal, key) → (request hash, response)` for 24 h with replay header and `409 idempotency_key_reuse`. | API_GUIDELINES §6 |
+| P04-TC13 | P04-R13 | Given an authorized fixture, verify: HTTP handlers for Phase 04 operations follow API_GUIDELINES (Problem Details, ETag/If-Match, cursor pagination); path or header tenant mismatch → `404`; in non-test builds all non-health routes return `401` until Phase 05. | API_GUIDELINES, TENANCY §2 |
+| P04-TC14 | P04-R14 | Given an authorized fixture, verify: Platform admins have no implicit data access: the `cloudledger_platform` role is limited to `tenants`, lifecycle, purge and anchor paths; `break_glass_grants` table (time-boxed, justified) is designed and audited; usage is enforced in Phase 05. | SP-04, TENANCY §1 |
+| P04-TC15 | P04-R15 | Given an authorized fixture, verify: Migrations are forward-only, apply on an empty DB and on a DB seeded with previous-phase data, pass `migrate lint`, and each has a documented compensating path. | DATABASE_SCHEMA conventions, FR-OPS-004 (foundation) |
+| P04-TC16 | P04-R16 | Given an authorized fixture, verify: Logs and spans carry `tenant_id` and `trace_id`; `tenant_id` never appears as a metric label; no settings values or secrets logged at INFO. | NFR-OBS-001, ADR-0017 |
+| P04-TC17 | P04-R90 | Given an authorized fixture, verify: Support individual and organizational tenants with common isolation and lifecycle guarantees. | FR-TEN-002 |
+| P04-TC18 | cross-cutting | Repeat reads, writes, jobs and artifact retrieval as a different tenant and a revoked principal; assert no data disclosure or unauthorized state change. | NFR-SEC-001, NFR-ACC-001 |
+| P04-TC19 | cross-cutting | Inject Pooled connection reuse; missing tenant context; forged job payload; concurrent audit writes; lease expiry; migration interruption; assert documented recovery, bounded retries and no partial publication. | NFR-SEC-001, NFR-ACC-001 |
+| P04-TC20 | cross-cutting | Replay identical work, crash around commit and retry; assert stable results and audit continuity. | NFR-SEC-001, NFR-ACC-001 |
+| P04-TC21 | cross-cutting | Apply to empty and prior-version stores; verify tenant constraints and compensating recovery preserve control totals. | NFR-SEC-001, NFR-ACC-001 |
+
+## Execution evidence
+Run domain unit tests, database integration tests, applicable provider/analytics contracts and Playwright user journeys. Pin environment, seed, clock, artifact digest and fixture hash. Money uses exact decimal golden comparisons; UI values must agree with semantic API totals. Record latency distributions on the approved reference hardware where performance applies. No test command is claimed until an executable implementation exists.
+
+## Explicit coverage: FR-TEN-002
+
+| Test ID | PRD requirement | Scenario and expected result |
+|---|---|---|
+| P04-TC91 | FR-TEN-002 | Create an individual tenant and an organizational tenant with several members and hierarchy nodes; verify identical isolation rules and permitted lifecycle actions. |

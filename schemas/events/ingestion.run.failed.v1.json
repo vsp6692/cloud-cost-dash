@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.cloudledger.dev/events/ingestion.run.failed.v1.json",
+  "title": "dev.cloudledger.ingestion.run.failed.v1",
+  "description": "DRAFT. Producer: billing. Idempotency key: run id. Phase 12. See docs/contracts/EVENTS.md.",
+  "x-phase": "12",
+  "x-idempotency-key": "run id",
+  "allOf": [
+    {
+      "$ref": "cloudevent-envelope.v1.json"
+    }
+  ],
+  "properties": {
+    "type": {
+      "const": "dev.cloudledger.ingestion.run.failed.v1"
+    },
+    "source": {
+      "const": "cloudledger/billing"
+    },
+    "data": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "run_id",
+        "connector_id",
+        "capability",
+        "status",
+        "error",
+        "finished_at"
+      ],
+      "properties": {
+        "run_id": {
+          "$ref": "cloudevent-envelope.v1.json#/$defs/id"
+        },
+        "connector_id": {
+          "$ref": "cloudevent-envelope.v1.json#/$defs/id"
+        },
+        "capability": {
+          "type": "string"
+        },
+        "scope_key": {
+          "type": "string"
+        },
+        "billing_period": {
+          "$ref": "cloudevent-envelope.v1.json#/$defs/billing_period"
+        },
+        "trigger": {
+          "enum": [
+            "schedule",
+            "backfill",
+            "manual",
+            "restatement",
+            "replay"
+          ]
+        },
+        "status": {
+          "enum": [
+            "failed",
+            "failed_validation",
+            "quarantined"
+          ]
+        },
+        "error": {
+          "$ref": "cloudevent-envelope.v1.json#/$defs/problem"
+        },
+        "retryable": {
+          "type": "boolean"
+        },
+        "finished_at": {
+          "$ref": "cloudevent-envelope.v1.json#/$defs/timestamp"
+        }
+      }
+    }
+  }
+}

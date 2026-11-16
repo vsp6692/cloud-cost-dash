@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.cloudledger.dev/events/cost.period.normalized.v1.json",
+  "title": "dev.cloudledger.cost.period.normalized.v1",
+  "description": "DRAFT. Producer: billing. Idempotency key: tenant + connector + period + data_version. Phase 11. See docs/contracts/EVENTS.md.",
+  "x-phase": "11",
+  "x-idempotency-key": "tenant + connector + period + data_version",
+  "allOf": [
+    {
+      "$ref": "cloudevent-envelope.v1.json"
+    }
+  ],
+  "properties": {
+    "type": {
+      "const": "dev.cloudledger.cost.period.normalized.v1"
+    },
+    "source": {
+      "const": "cloudledger/billing"
+    },
+    "data": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "connector_id",
+        "billing_period",
+        "data_version",
+        "period_version",
+        "ingestion_run_id",
+        "totals"
+      ],
+      "properties": {
+        "connector_id": {
+          "$ref": "cloudevent-envelope.v1.json#/$defs/id"
+        },
+        "provider": {
+          "$ref": "cloudevent-envelope.v1.json#/$defs/provider"
+        },
+        "billing_period": {
+          "$ref": "cloudevent-envelope.v1.json#/$defs/billing_period"
+        },
+        "data_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "period_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "ingestion_run_id": {
+          "$ref": "cloudevent-envelope.v1.json#/$defs/id"
+        },
+        "mapping_version": {
+          "type": "string"
+        },
+        "focus_version": {
+          "type": "string"
+        },
+        "provider_final": {
+          "type": "boolean"
+        },
+        "totals": {
+          "type": "array",
+          "description": "Validated control totals by (account, currency, charge_category).",
+          "items": {
+            "$ref": "#/$defs/control_total"
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "control_total": {
+      "type": "object",
+      "required": [
+        "billing_account_id",
+        "charge_category",
+        "billed_cost",
+        "effective_cost"
+      ],
+      "properties": {
+        "billing_account_id": {
+          "type": "string"
+        },
+        "charge_category": {
+          "type": "string"
+        },
+        "billed_cost": {
+          "$ref": "cloudevent-envelope.v1.json#/$defs/money"
+        },
+        "effective_cost": {
+          "$ref": "cloudevent-envelope.v1.json#/$defs/money"
+        },
+        "row_count": {
+          "type": "integer"
+        }
+      }
+    }
+  }
+}

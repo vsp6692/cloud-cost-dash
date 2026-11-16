@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.cloudledger.dev/events/connector.verified.v1.json",
+  "title": "dev.cloudledger.connector.verified.v1",
+  "description": "DRAFT. Producer: connectors. Idempotency key: connector id + verified_at. Phase 06. See docs/contracts/EVENTS.md.",
+  "x-phase": "06",
+  "x-idempotency-key": "connector id + verified_at",
+  "allOf": [
+    {
+      "$ref": "cloudevent-envelope.v1.json"
+    }
+  ],
+  "properties": {
+    "type": {
+      "const": "dev.cloudledger.connector.verified.v1"
+    },
+    "source": {
+      "const": "cloudledger/connectors"
+    },
+    "data": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "connector_id",
+        "provider",
+        "verified_at",
+        "status",
+        "capabilities"
+      ],
+      "properties": {
+        "connector_id": {
+          "$ref": "cloudevent-envelope.v1.json#/$defs/id"
+        },
+        "provider": {
+          "$ref": "cloudevent-envelope.v1.json#/$defs/provider"
+        },
+        "verified_at": {
+          "$ref": "cloudevent-envelope.v1.json#/$defs/timestamp"
+        },
+        "status": {
+          "enum": [
+            "active",
+            "degraded",
+            "error"
+          ]
+        },
+        "capabilities": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "capability",
+              "verified_status"
+            ],
+            "properties": {
+              "capability": {
+                "type": "string"
+              },
+              "verified_status": {
+                "enum": [
+                  "pass",
+                  "fail",
+                  "unknown",
+                  "not_applicable"
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

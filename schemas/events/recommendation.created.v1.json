@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.cloudledger.dev/events/recommendation.created.v1.json",
+  "title": "dev.cloudledger.recommendation.created.v1",
+  "description": "DRAFT. Producer: recommendations. Idempotency key: rec id + version. Phase 21. See docs/contracts/EVENTS.md.",
+  "x-phase": "21",
+  "x-idempotency-key": "rec id + version",
+  "allOf": [
+    {
+      "$ref": "cloudevent-envelope.v1.json"
+    }
+  ],
+  "properties": {
+    "type": {
+      "const": "dev.cloudledger.recommendation.created.v1"
+    },
+    "source": {
+      "const": "cloudledger/recommendations"
+    },
+    "data": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "recommendation_id",
+        "version",
+        "rule_id",
+        "category",
+        "target_type",
+        "target_native_id",
+        "net_monthly_savings",
+        "risk",
+        "confidence"
+      ],
+      "properties": {
+        "recommendation_id": {
+          "$ref": "cloudevent-envelope.v1.json#/$defs/id"
+        },
+        "version": {
+          "type": "integer"
+        },
+        "rule_id": {
+          "type": "string"
+        },
+        "rule_version": {
+          "type": "string"
+        },
+        "source": {
+          "enum": [
+            "native",
+            "provider"
+          ]
+        },
+        "category": {
+          "type": "string"
+        },
+        "provider": {
+          "$ref": "cloudevent-envelope.v1.json#/$defs/provider"
+        },
+        "target_type": {
+          "type": "string"
+        },
+        "target_native_id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "gross_monthly_savings": {
+          "$ref": "cloudevent-envelope.v1.json#/$defs/money"
+        },
+        "net_monthly_savings": {
+          "$ref": "cloudevent-envelope.v1.json#/$defs/money"
+        },
+        "risk": {
+          "enum": [
+            "low",
+            "medium",
+            "high"
+          ]
+        },
+        "confidence": {
+          "$ref": "cloudevent-envelope.v1.json#/$defs/decimal"
+        }
+      }
+    }
+  }
+}
